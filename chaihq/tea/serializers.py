@@ -2,7 +2,18 @@ from rest_framework import serializers
 from .models import Tea
 from django.contrib.auth.models import User
 
+class SafeImageField(serializers.ImageField):
+    """Custom image field that safely handles Cloudinary errors"""
+    def to_representation(self, value):
+        try:
+            return super().to_representation(value)
+        except (ValueError, Exception) as e:
+            # Return None or empty string if Cloudinary is not configured
+            return None
+
 class TeaSerializer(serializers.ModelSerializer):
+    photo = SafeImageField(required=False, allow_null=True)
+    
     class Meta:
         model = Tea
         fields = "__all__"
