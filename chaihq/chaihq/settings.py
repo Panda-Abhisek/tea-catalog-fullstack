@@ -199,6 +199,7 @@ STORAGES = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
+    "https://tea.abhisekpanda.co.in"
 ]
 
 SECURE_PROXY_SSL_HEADER = (
