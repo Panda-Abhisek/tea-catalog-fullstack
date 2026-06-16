@@ -10,12 +10,19 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+from dotenv import load_dotenv
 import os
 from pathlib import Path
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv(BASE_DIR / ".env") 
+
+print("Cloud Name:", os.getenv("CLOUDINARY_CLOUD_NAME"))
+print("API Key:", os.getenv("CLOUDINARY_API_KEY"))
+print("API Secret:", os.getenv("CLOUDINARY_API_SECRET"))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -43,6 +50,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'drf_spectacular',
+    "cloudinary",
+    "cloudinary_storage",
 ]
 
 REST_FRAMEWORK = {
@@ -158,3 +167,33 @@ LOGIN_URL = '/accounts/login'
 
 LOGIN_REDIRECT_URL = '/tea/'
 LOGOUT_REDIRECT_URL = '/tea/'
+
+import cloudinary
+
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True,
+)
+
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.getenv(
+        "CLOUDINARY_CLOUD_NAME"
+    ),
+    "API_KEY": os.getenv(
+        "CLOUDINARY_API_KEY"
+    ),
+    "API_SECRET": os.getenv(
+        "CLOUDINARY_API_SECRET"
+    ),
+}
+
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
