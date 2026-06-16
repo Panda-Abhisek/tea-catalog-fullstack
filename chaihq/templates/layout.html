@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous" />
+    <title>
+      {% block title %}
+        Chai Base
+      {% endblock %}
+    </title>
+  </head>
+  <body style="margin: 0; min-height: 100vh; background: #000;">
+    <div class="min-vh-100 w-100" style="background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('{% static 'Gemini_Generated_Image_9d2xwx9d2xwx9d2x.png' %}') center/cover no-repeat; background-attachment: fixed;">
+      {% block content %}
+        <h1>Welcome to Tea Knowledge Base</h1>
+      {% endblock %}
+    </div>
+  </body>
+</html>

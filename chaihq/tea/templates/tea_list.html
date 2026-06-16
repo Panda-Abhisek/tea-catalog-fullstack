@@ -1,0 +1,20 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+  <p class="text-center text-white display-4 fw-bold py-4 px-2">Tea List</p>
+
+  <div class="container mx-auto row gap-5 justify-content-center">
+    {% for tea in teas %}
+      <div class="card" style="width: 18rem;">
+        {% if tea.photo %}
+          <img src="{{ tea.photo.url }}" class="card-img-top" alt="{{ tea.name }}" />
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title">{{ tea.name }}</h5>
+          <p class="card-text">{{ tea.description|truncatechars:150 }}</p>
+          <a href="#" class="btn btn-success">Add</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

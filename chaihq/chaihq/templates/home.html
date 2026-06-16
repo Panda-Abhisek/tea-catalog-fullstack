@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}Home{% endblock title %}
+
+{% block content %}
+<div class="d-flex justify-content-center align-items-center min-vh-100 text-white">
+    <div class="text-center px-4 py-5">
+        <h1 class="display-4 fw-bold">Welcome to the world of Tea</h1>
+        <p class="lead">Discover the rich history and diverse varieties of tea from around the world.</p>
+        <a href="{% url 'tea-list-create' %}" class="btn btn-success btn-lg mt-3">Explore Tea Knowledge Base</a>
+    </div>
+</div>
+{% endblock content %}
