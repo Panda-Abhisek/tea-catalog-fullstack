@@ -134,7 +134,7 @@ const Catalog = () => {
                             onChange={handleFilterChange}
                             className="flex-1 md:flex-none text-emerald-600 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
                         >
-                            <option value="-created_at">Newest Arrivals</option>
+                            <option value="created_at">Newest Arrivals</option>
                             <option value="price">Price: Low to High</option>
                             <option value="-price">Price: High to Low</option>
                             <option value="name">Name: A to Z</option>
