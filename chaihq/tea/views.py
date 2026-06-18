@@ -9,6 +9,8 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from .permissions import IsAdminOrReadOnly
+
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
@@ -17,7 +19,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data["user"] = {
             "id": self.user.id,
             "username": self.user.username,
-            "email": self.user.email,
+            "role": (
+                "Admin"
+                if self.user.groups.filter(name="Admin").exists()
+                else "Customer"
+            ),
         }
 
         return data
@@ -57,7 +63,7 @@ class TeaListCreateView(generics.ListCreateAPIView):
         "created_at",
     ]
 
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
 
 
 class TeaRetrieveUpdateDeleteView(
@@ -65,7 +71,7 @@ class TeaRetrieveUpdateDeleteView(
 ):
     queryset = Tea.objects.all()
     serializer_class = TeaSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAdminOrReadOnly]
 
 
 # """

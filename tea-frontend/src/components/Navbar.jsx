@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, NavLink } from 'react-router-dom';
 import { ShoppingCart, User, LogOut, Package, Shield } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -23,7 +23,7 @@ const Navbar = () => {
             <span className="hidden sm:inline">Tea Haven</span>
             <span className="sm:hidden">TH</span>
           </Link>
-          
+
           {/* Main Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <Link to="/" className="text-amber-100 hover:text-emerald-700 font-medium transition-colors">
@@ -52,33 +52,52 @@ const Navbar = () => {
                   </span>
                 </div>
 
-                <Link 
-                  to="/admin/teas" 
-                  className="text-sm font-medium text-amber-100 hover:text-emerald-700 flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-                  title="Admin Dashboard"
-                >
-                  <Shield className="h-4 w-4" />
-                  <span className="hidden sm:inline">Admin</span>
-                </Link>
-                
-                <button 
-                  onClick={handleLogout}
-                  className="text-sm font-medium text-red-600 hover:text-red-700 flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline">Logout</span>
-                </button>
+                {user.role === 'Admin' ? (
+                  <>
+                    <NavLink
+                      to="/admin/teas"
+                      className={({ isActive }) =>
+                        `text-sm font-medium flex items-center gap-1 px-3 py-2 rounded-lg transition-colors ${isActive
+                          ? "bg-emerald-600 text-white"
+                          : "text-amber-100 hover:text-emerald-700 hover:bg-gray-50"
+                        }`
+                      }
+                      title="Admin Dashboard"
+                    >
+                      <Shield className="h-4 w-4" />
+                      <span className="hidden sm:inline">Inventory</span>
+                    </NavLink>
+
+                    <button
+                      onClick={handleLogout}
+                      className="text-sm font-medium text-red-600 hover:text-red-700 flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span className="hidden sm:inline">Logout</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleLogout}
+                      className="text-sm font-medium text-red-600 hover:text-red-700 flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span className="hidden sm:inline">Logout</span>
+                    </button>
+                  </>
+                )}
               </>
             ) : (
-              <Link 
-                to="/admin/login" 
+              <Link
+                to="/admin/login"
                 className="text-sm font-medium text-amber-100 bg-emerald-600 hover:text-emerald-700 flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <User className="h-4 w-4" />
                 <span className="hidden sm:inline">Login</span>
               </Link>
             )}
-            
+
             {/* Mobile Cart Icon */}
             <Link to="/cart" className="md:hidden relative p-2 text-amber-100 hover:text-emerald-700 hover:bg-gray-50 rounded-lg transition-colors">
               <ShoppingCart className="h-6 w-6" />

@@ -9,7 +9,7 @@ import Cart from './pages/Cart';
 import Register from './pages/Register';
 
 // Admin Pages
-import AdminLogin from './pages/AdminLogin';
+import Login from './pages/Login';
 import AdminTeaList from './pages/AdminTeaList';
 import CreateTea from './pages/CreateTea';
 import EditTea from './pages/EditTea';
@@ -27,7 +27,7 @@ function App() {
           <Route path="/register" element={<Register />} />
 
           {/* Admin Management Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/login" element={<Login />} />
           <Route element={<ProtectedRoute redirectPath="/admin/login" />}>
             <Route path="/admin" element={<Navigate to="/admin/teas" replace />} />
             <Route path="/admin/teas" element={<AdminTeaList />} />

@@ -1,27 +1,39 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../utils/axios';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { Lock, ArrowLeft, CheckCircle } from 'lucide-react';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Show success message if redirected from registration
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+    }
+  }, [location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     setIsLoading(true);
 
     try {
-      const response = await api.post('/login/', { username, password });
-      
-      // Assuming the response contains 'access' and 'refresh' tokens
-      localStorage.setItem('access_token', response.data.access);
-      localStorage.setItem('refresh_token', response.data.refresh);
-      
-      navigate('/');
+      const response = await login(username, password);
+      if (response.user.role === "Admin") {
+        navigate("/admin/teas", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (err) {
       setError(err.response?.data?.detail || 'Invalid username or password');
     } finally {
@@ -30,19 +42,32 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-900">Sign in to your account</h2>
+    <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 mb-2">
+            <Lock className="h-6 w-6" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">Admin Portal</h2>
+          <p className="text-sm text-gray-500">Sign in to manage inventory or complete purchases</p>
+        </div>
         
+        {successMessage && (
+          <div className="p-3 text-sm text-green-700 bg-green-50 border border-green-200 rounded-md flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 shrink-0" />
+            {successMessage}
+          </div>
+        )}
+
         {error && (
-          <div className="p-3 text-sm text-red-700 bg-red-100 rounded-md">
+          <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md">
             {error}
           </div>
         )}
 
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
               Username
             </label>
             <input
@@ -50,14 +75,15 @@ const Login = () => {
               name="username"
               type="text"
               required
-              className="input-field mt-1"
+              autoComplete="username"
+              className="input-field"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
               Password
             </label>
             <input
@@ -65,7 +91,8 @@ const Login = () => {
               name="password"
               type="password"
               required
-              className="input-field mt-1"
+              autoComplete="current-password"
+              className="input-field"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -75,12 +102,31 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full btn-primary"
+              className="w-full btn-primary bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500"
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
         </form>
+
+        <div className="text-center pt-4 border-t border-gray-100 space-y-3">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link 
+              to="/register" 
+              className="font-semibold text-emerald-700 hover:text-emerald-900 transition-colors"
+            >
+              Sign up
+            </Link>
+          </p>
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-emerald-700 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Shop
+          </Link>
+        </div>
       </div>
     </div>
   );
