@@ -33,3 +33,21 @@ Full-stack tea catalog application.
 - Deployment
 - Custom permissions (tea owner only)
 - CI/CD
+
+## Demo Credentials
+
+### Admin User
+
+```text
+Username: admin_demo
+Password: admin123
+```
+
+### Customer User
+
+```text
+Username: customer_demo
+Password: customer123
+```
+
+> Note: These are sample credentials for demonstration purposes only. Create your own accounts when running the project locally.
