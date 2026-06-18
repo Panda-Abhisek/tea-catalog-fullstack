@@ -39,15 +39,7 @@ Full-stack tea catalog application.
 ### Admin User
 
 ```text
-Username: admin_demo
-Password: admin123
+Username: admin
+Password: NewStrongPassword123
 ```
-
-### Customer User
-
-```text
-Username: customer_demo
-Password: customer123
-```
-
 > Note: These are sample credentials for demonstration purposes only. Create your own accounts when running the project locally.
