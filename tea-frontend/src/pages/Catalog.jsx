@@ -4,14 +4,18 @@ import api from '../utils/axios';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { Search, SlidersHorizontal, ShoppingCart, Leaf, Lock } from 'lucide-react';
+import {
+    addToCart as addToCartAPI,
+    updateCartItem,
+    removeCartItem,
+} from "../services/cartService";
 
 const Catalog = () => {
     const [teas, setTeas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const { addToCart } = useCart();
+    const { cart, fetchCart } = useCart();
     const { user } = useAuth();
-    const [addingToCart, setAddingToCart] = useState(null);
     const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
     const [filters, setFilters] = useState({
@@ -22,6 +26,42 @@ const Catalog = () => {
     });
 
     const [showFilters, setShowFilters] = useState(false);
+
+    const getCartItem = (teaId) => {
+        return (
+            cart?.items?.find(
+                (item) =>
+                    item.tea === teaId
+            ) || null
+        );
+    };
+
+    const getCartQuantity = (teaId) => {
+        const item = cart?.items?.find((item) =>
+            item.tea === teaId
+        );
+        return (item?.quantity || 0);
+    };
+
+    const handleQuantityChange = async (teaId, delta) => {
+        const cartItem = getCartItem(teaId);
+        if (!cartItem) {
+            await addToCartAPI(teaId, 1);
+            await fetchCart();
+            return;
+        }
+
+        const newQuantity = cartItem.quantity + delta;
+
+        if (newQuantity <= 0) {
+            await removeCartItem(cartItem.id);
+            await fetchCart();
+            return;
+        }
+
+        await updateCartItem(cartItem.id, newQuantity);
+        await fetchCart();
+    };
 
     const fetchTeas = useCallback(async () => {
         setLoading(true);
@@ -54,20 +94,24 @@ const Catalog = () => {
         setFilters((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleAddToCart = (e, tea) => {
+    const handleAddToCart = async (e, tea) => {
         e.preventDefault();
-
         if (!user) {
             setShowLoginPrompt(true);
-            setTimeout(() => setShowLoginPrompt(false), 3000);
+            setTimeout(() => setShowLoginPrompt(false),
+                3000
+            );
             return;
         }
 
-        if (tea.stock <= 0) return;
+        if (tea.stock <= 0) { return; }
 
-        setAddingToCart(tea.id);
-        addToCart(tea);
-        setTimeout(() => setAddingToCart(null), 1000);
+        try {
+            await addToCartAPI(tea.id, 1);
+            await fetchCart();
+        } catch (error) {
+            console.error("Failed to add item:", error);
+        }
     };
 
     const clearFilters = () => {
@@ -228,25 +272,42 @@ const Catalog = () => {
                                         ${Number(tea.price).toFixed(2)}
                                     </span>
 
-                                    <button
-                                        onClick={(e) => handleAddToCart(e, tea)}
-                                        disabled={tea.stock <= 0 || addingToCart === tea.id}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${tea.stock <= 0
-                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                : addingToCart === tea.id
-                                                    ? 'bg-green-600 text-white'
-                                                    : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95'
-                                            }`}
-                                    >
-                                        {addingToCart === tea.id ? (
-                                            'Added!'
+                                    <div className='flex flex-col'>
+                                        {getCartQuantity(tea.id) > 0 ? (
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        handleQuantityChange(tea.id, -1);
+                                                    }}
+                                                    className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">
+                                                    -
+                                                </button>
+
+                                                <span className=" min-w-7.5 text-center font-semibold">
+                                                    {getCartQuantity(tea.id)}
+                                                </span>
+
+                                                <button onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handleQuantityChange(tea.id, 1);
+                                                }}
+                                                    className="px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 "
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
                                         ) : (
-                                            <>
-                                                <ShoppingCart className="h-4 w-4" />
+                                            <button onClick={(e) =>
+                                                handleAddToCart(e, tea)
+                                            }
+                                                disabled={tea.stock <= 0}
+                                                className="bg-emerald-600 text-white px-4 py-2 rounded-lg"
+                                            >
                                                 Add
-                                            </>
+                                            </button>
                                         )}
-                                    </button>
+                                    </div>
                                 </div>
                             </div>
                         </Link>

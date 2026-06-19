@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { cartCount } = useCart();
+  const { cart } = useCart();
+  const cartCount = cart?.total_items || 0;
   const { user, logout } = useAuth();
 
   const handleLogout = () => {

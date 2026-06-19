@@ -14,6 +14,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 from .views import CustomTokenObtainPairView
+from .cart_views import AddToCartView, CartView, ClearCartView, RemoveCartItemView, UpdateCartItemView
 
 urlpatterns = [
     path(
@@ -60,6 +61,31 @@ urlpatterns = [
         "teas/<int:pk>/recommendations/",
         TeaRecommendationView.as_view(),
         name="tea-recommendations",
+    ),
+    path(
+        "cart/",
+        CartView.as_view(),
+        name="cart"
+    ),
+    path(
+        "cart/add/",
+        AddToCartView.as_view(),
+        name="cart-add",
+    ),
+    path(
+        "cart/item/<int:item_id>/",
+        UpdateCartItemView.as_view(),
+        name="cart-item-update",
+    ),
+    path(
+        "cart/item/<int:item_id>/delete/",
+        RemoveCartItemView.as_view(),
+        name="cart-item-delete",
+    ),
+    path(
+        "cart/clear/",
+        ClearCartView.as_view(),
+        name="cart-clear",
     ),
 ]
 

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Tea
+from .models import Cart, Tea, CartItem
 from django.contrib.auth.models import User
 
 class SafeImageField(serializers.ImageField):
@@ -46,3 +46,64 @@ class DashboardStatsSerializer(serializers.Serializer):
     avg_price = serializers.FloatField()
     in_stock_teas = serializers.IntegerField()
     out_of_stock_teas = serializers.IntegerField()
+    
+
+class CartItemSerializer(serializers.ModelSerializer):
+    tea_name = serializers.CharField(source="tea.name",read_only=True)
+    tea_price = serializers.DecimalField(
+        source="tea.price",
+        max_digits=10,
+        decimal_places=2,
+        read_only=True
+    )
+    tea_photo = serializers.ImageField(source="tea.photo",read_only=True)
+
+    class Meta:
+        model = CartItem
+
+        fields = [
+            "id",
+            "tea",
+            "tea_name",
+            "tea_price",
+            "tea_photo",
+            "quantity",
+        ]
+        
+        
+class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(many=True,read_only=True)
+    total_price = serializers.SerializerMethodField()
+    total_items = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Cart
+
+        fields = [
+            "id",
+            "user",
+            "items",
+            "total_items",
+            "total_price",
+        ]
+
+    def get_total_items(self,obj):
+        return sum(
+            item.quantity
+            for item in obj.items.all()
+        )
+
+    def get_total_price(self,obj):
+        return sum(
+            item.quantity * item.tea.price
+            for item in obj.items.all()
+        )
+        
+        
+class AddToCartSerializer(serializers.Serializer):
+    tea_id = serializers.IntegerField()
+    quantity = serializers.IntegerField(min_value=1)
+    
+
+class UpdateCartItemSerializer(serializers.Serializer):
+    quantity = serializers.IntegerField(min_value=1)

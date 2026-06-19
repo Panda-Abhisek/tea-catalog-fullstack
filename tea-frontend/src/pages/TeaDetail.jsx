@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, NavLink } from 'react-router-dom';
 import api from '../utils/axios';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Leaf, ShoppingCart, Check, AlertCircle, Lock } from 'lucide-react';
+import { ArrowLeft, Leaf, ShoppingCart, Check, AlertCircle, Lock, Plus, Minus } from 'lucide-react';
+import {
+  addToCart as addToCartAPI,
+  updateCartItem,
+  removeCartItem,
+} from "../services/cartService";
 
 const TeaDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { cart, fetchCart } = useCart();
   const { user } = useAuth();
 
   const [tea, setTea] = useState(null);
@@ -56,8 +61,14 @@ const TeaDetail = () => {
     fetchRecommendations();
   }, [id])
 
+  const getCartQuantity = (teaId) => {
+    const item = cart?.items?.find((item) =>
+      item.tea === teaId
+    );
+    return (item?.quantity || 0);
+  };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!user) {
       setShowLoginPrompt(true);
       setTimeout(() => setShowLoginPrompt(false), 3000);
@@ -67,18 +78,39 @@ const TeaDetail = () => {
     if (!tea || tea.stock <= 0) return;
 
     setIsAdding(true);
-    for (let i = 0; i < quantity; i++) {
-      addToCart(tea);
-    }
+    await addToCartAPI(tea.id, quantity);
+    await fetchCart()
 
     setTimeout(() => setIsAdding(false), 1000);
   };
 
-  const handleQuantityChange = (e) => {
-    const val = parseInt(e.target.value, 10);
-    if (!isNaN(val) && val >= 1 && val <= (tea?.stock || 1)) {
-      setQuantity(val);
+  const getCartItem = (teaId) => {
+    return (
+      cart?.items?.find(
+        (item) =>
+          item.tea === teaId
+      ) || null
+    );
+  };
+
+  const handleQuantityChange = async (teaId, delta) => {
+    const cartItem = getCartItem(teaId);
+    if (!cartItem) {
+      await addToCartAPI(teaId, 1);
+      await fetchCart();
+      return;
     }
+
+    const newQuantity = cartItem.quantity + delta;
+
+    if (newQuantity <= 0) {
+      await removeCartItem(cartItem.id);
+      await fetchCart();
+      return;
+    }
+
+    await updateCartItem(cartItem.id, newQuantity);
+    await fetchCart();
   };
 
   if (loading) {
@@ -169,59 +201,52 @@ const TeaDetail = () => {
             </div>
 
             <div className="pt-6 border-t border-gray-100 space-y-4">
-              {!isOutOfStock && (
-                <div className="flex items-center gap-4">
-                  <label htmlFor="quantity" className="text-sm font-medium text-gray-700">
-                    Quantity:
-                  </label>
-                  <div className="flex items-center border border-gray-300 rounded-lg">
-                    <button
-                      onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                      className="px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-l-lg"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      id="quantity"
-                      value={quantity}
-                      onChange={handleQuantityChange}
-                      className="w-16 text-center border-x border-gray-300 py-2 focus:outline-none"
-                      min="1"
-                      max={tea.stock}
-                    />
-                    <button
-                      onClick={() => setQuantity(q => Math.min(tea.stock, q + 1))}
-                      className="px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-r-lg"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              )}
+              <div className='flex flex-col'>
+                {getCartQuantity(tea.id) > 0 ? (
+                  <div className=''>
+                    <div className="flex justify-center items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleQuantityChange(tea.id, -1);
+                        }}
+                        className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">
+                        -
+                      </button>
 
-              <button
-                onClick={handleAddToCart}
-                disabled={isOutOfStock || isAdding}
-                className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-base font-semibold transition-all ${isOutOfStock
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : isAdding
-                    ? 'bg-green-600 text-white'
-                    : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]'
-                  }`}
-              >
-                {isAdding ? (
-                  <>
-                    <Check className="h-5 w-5" />
-                    Added to Cart!
-                  </>
+                      <span className=" min-w-7.5 text-center font-semibold">
+                        {getCartQuantity(tea.id)}
+                      </span>
+
+                      <button onClick={(e) => {
+                        e.preventDefault();
+                        handleQuantityChange(tea.id, 1);
+                      }}
+                        className="px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 "
+                      >
+                        +
+                      </button>
+                    </div>
+                    <NavLink to={'/cart'} className='w-full flex mt-4 items-center justify-center gap-2 py-3 px-6 rounded-xl text-base font-semibold transition-all bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]'>
+                      <ShoppingCart className="h-5 w-5" />
+                      Go to Cart
+                    </NavLink>
+                  </div>
                 ) : (
-                  <>
-                    <ShoppingCart className="h-5 w-5" />
-                    {isOutOfStock ? 'Out of Stock' : `Add to Cart - $${(tea.price * quantity).toFixed(2)}`}
-                  </>
+                  <button onClick={(e) =>
+                    handleAddToCart(e, tea)
+                  }
+                    disabled={tea.stock <= 0}
+                    // className="bg-emerald-600 text-white px-4 py-2 rounded-lg"
+                    className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-base font-semibold transition-all bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]`}
+                  >
+                    <>
+                      <ShoppingCart className="h-5 w-5" />
+                      {isOutOfStock ? 'Out of Stock' : `Add to Cart - $${(tea.price * quantity).toFixed(2)}`}
+                    </>
+                  </button>
                 )}
-              </button>
+              </div>
 
               {!user && !isOutOfStock && (
                 <p className="text-xs text-center text-amber-700 bg-amber-50 py-2 rounded-lg">
