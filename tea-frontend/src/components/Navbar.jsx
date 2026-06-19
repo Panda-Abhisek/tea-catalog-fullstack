@@ -68,6 +68,18 @@ const Navbar = () => {
                       <span className="hidden sm:inline">Inventory</span>
                     </NavLink>
 
+                    <NavLink
+                      to="/admin/dashboard"
+                      className={({ isActive }) =>
+                        `text-sm font-medium flex items-center gap-1 px-3 py-2 rounded-lg transition-colors ${isActive
+                          ? "bg-emerald-600 text-white"
+                          : "text-amber-100 hover:text-emerald-700 hover:bg-gray-50"
+                        }`
+                      }
+                    >
+                      Dashboard
+                    </NavLink>
+
                     <button
                       onClick={handleLogout}
                       className="text-sm font-medium text-red-600 hover:text-red-700 flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors"

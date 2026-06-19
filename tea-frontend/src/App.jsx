@@ -2,6 +2,9 @@ import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 
+// Error Page
+import NotFound404 from './pages/NotFound404'
+
 // Public Pages
 import Catalog from './pages/Catalog';
 import TeaDetail from './pages/TeaDetail';
@@ -13,6 +16,8 @@ import Login from './pages/Login';
 import AdminTeaList from './pages/AdminTeaList';
 import CreateTea from './pages/CreateTea';
 import EditTea from './pages/EditTea';
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminRoute from './components/AdminRoute';
 
 function App() {
   return (
@@ -30,13 +35,16 @@ function App() {
           <Route path="/admin/login" element={<Login />} />
           <Route element={<ProtectedRoute redirectPath="/admin/login" />}>
             <Route path="/admin" element={<Navigate to="/admin/teas" replace />} />
-            <Route path="/admin/teas" element={<AdminTeaList />} />
+            <Route path="/admin/teas" element={<AdminRoute><AdminTeaList /></AdminRoute>} />
             <Route path="/admin/teas/create" element={<CreateTea />} />
             <Route path="/admin/teas/:id/edit" element={<EditTea />} />
+            <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>}/>
           </Route>
 
+          <Route path='/404' element={<NotFound404 />} />
+
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
       </main>
     </div>

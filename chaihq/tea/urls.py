@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    DashboardStatsView,
     TeaListCreateView,
     TeaRetrieveUpdateDeleteView, register
 )
@@ -49,6 +50,11 @@ urlpatterns = [
             url_name="schema"
         ),
         name="swagger-ui",
+    ),
+    path(
+        "dashboard/stats/",
+        DashboardStatsView.as_view(),
+        name="dashboard-stats",
     ),
 ]
 

@@ -11,6 +11,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .permissions import IsAdminOrReadOnly
 
+from django.contrib.auth.models import User
+from django.db.models import Avg, Sum, F
+from rest_framework.views import APIView
+
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
@@ -72,6 +76,58 @@ class TeaRetrieveUpdateDeleteView(
     queryset = Tea.objects.all()
     serializer_class = TeaSerializer
     permission_classes = [IsAdminOrReadOnly]
+    
+
+class DashboardStatsView(APIView):
+
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get(self, request):
+        stats = {
+            "total_teas": Tea.objects.count(),
+            "total_users": User.objects.count(),
+            "avg_price": Tea.objects.aggregate(
+                Avg("price")
+            )["price__avg"] or 0,
+            "in_stock_teas": Tea.objects.filter(
+                stock__gt=0
+            ).count(),
+            "out_of_stock_teas": Tea.objects.filter(
+                stock=0
+            ).count(),
+
+            "latest_teas": list(
+                Tea.objects.order_by("-created_at")
+                .values("id", "name", "price")[:5]
+            ),
+
+            "latest_users": list(
+                User.objects.order_by("-date_joined")
+                .values("id", "username", "date_joined")[:5]
+            ),
+            "inventory_value": sum(
+                tea.price * tea.stock
+                for tea in Tea.objects.all()
+            ),
+            "low_stock_teas": list(
+                Tea.objects.filter(stock__lt=5)
+                .values(
+                    "id",
+                    "name",
+                    "stock"
+                )
+            ),
+            "top_expensive_teas": list(
+                Tea.objects.order_by("-price")
+                .values(
+                    "id",
+                    "name",
+                    "price"
+                )[:5]
+            ),
+        }
+
+        return Response(stats)
 
 
 # """

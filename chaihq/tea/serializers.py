@@ -40,3 +40,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
     
 
+class DashboardStatsSerializer(serializers.Serializer):
+    total_teas = serializers.IntegerField()
+    total_users = serializers.IntegerField()
+    avg_price = serializers.FloatField()
+    in_stock_teas = serializers.IntegerField()
+    out_of_stock_teas = serializers.IntegerField()
