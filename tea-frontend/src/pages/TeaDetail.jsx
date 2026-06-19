@@ -10,13 +10,14 @@ const TeaDetail = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { user } = useAuth();
-  
+
   const [tea, setTea] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [recommendations, setRecommendations] = useState([]);
 
   useEffect(() => {
     const fetchTea = async () => {
@@ -35,6 +36,27 @@ const TeaDetail = () => {
     fetchTea();
   }, [id]);
 
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+
+        const response = await api.get(
+          `/teas/${id}/recommendations/`
+        );
+
+        setRecommendations(
+          response.data
+        );
+
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchRecommendations();
+  }, [id])
+
+
   const handleAddToCart = () => {
     if (!user) {
       setShowLoginPrompt(true);
@@ -43,12 +65,12 @@ const TeaDetail = () => {
     }
 
     if (!tea || tea.stock <= 0) return;
-    
+
     setIsAdding(true);
     for (let i = 0; i < quantity; i++) {
       addToCart(tea);
     }
-    
+
     setTimeout(() => setIsAdding(false), 1000);
   };
 
@@ -96,8 +118,8 @@ const TeaDetail = () => {
         </div>
       )}
 
-      <button 
-        onClick={() => navigate(-1)} 
+      <button
+        onClick={() => navigate(-1)}
         className="mb-6 text-emerald-400 hover:text-emerald-700 flex items-center gap-2 font-medium transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
@@ -110,7 +132,7 @@ const TeaDetail = () => {
           <div className="h-64 md:h-full bg-emerald-50 flex items-center justify-center p-8">
             <Leaf className="h-32 w-32 text-emerald-200" />
             {tea.photo && (
-              <img 
+              <img
                 src={tea.photo}
                 alt={tea.name}
                 className="w-full h-full object-fit-cover rounded-lg shadow-sm border border-gray-200"
@@ -153,7 +175,7 @@ const TeaDetail = () => {
                     Quantity:
                   </label>
                   <div className="flex items-center border border-gray-300 rounded-lg">
-                    <button 
+                    <button
                       onClick={() => setQuantity(q => Math.max(1, q - 1))}
                       className="px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-l-lg"
                     >
@@ -168,7 +190,7 @@ const TeaDetail = () => {
                       min="1"
                       max={tea.stock}
                     />
-                    <button 
+                    <button
                       onClick={() => setQuantity(q => Math.min(tea.stock, q + 1))}
                       className="px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-r-lg"
                     >
@@ -181,13 +203,12 @@ const TeaDetail = () => {
               <button
                 onClick={handleAddToCart}
                 disabled={isOutOfStock || isAdding}
-                className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-base font-semibold transition-all ${
-                  isOutOfStock
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : isAdding
+                className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-base font-semibold transition-all ${isOutOfStock
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : isAdding
                     ? 'bg-green-600 text-white'
                     : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98]'
-                }`}
+                  }`}
               >
                 {isAdding ? (
                   <>
@@ -201,7 +222,7 @@ const TeaDetail = () => {
                   </>
                 )}
               </button>
-              
+
               {!user && !isOutOfStock && (
                 <p className="text-xs text-center text-amber-700 bg-amber-50 py-2 rounded-lg">
                   <Lock className="h-3 w-3 inline mr-1 mb-0.5" />
@@ -211,6 +232,42 @@ const TeaDetail = () => {
             </div>
           </div>
         </div>
+      </div>
+      <div className="mt-10">
+        <h2 className="text-2xl text-amber-100 font-bold mb-4">
+          Similar Teas
+        </h2>
+        {recommendations.length === 0 ? (
+          <p className="text-emerald-500">
+            No recommendations available.
+          </p>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 ">
+            {
+              recommendations.map((tea) => (
+                <Link
+                  to={`/teas/${tea.id}`}
+                  key={tea.id}
+                  className="bg-amber-100/70 backdrop-blur-sm  hover:scale-105 rounded-xl shadow p-4 block hover:shadow-lg transition"
+                >
+
+                  <h3 className="font-semibold">
+                    {tea.name}
+                  </h3>
+
+                  <p className="text-sm text-gray-500">
+                    {tea.category}
+                  </p>
+
+                  <p className="font-bold mt-2">
+                    ₹{tea.price}
+                  </p>
+
+                </Link>
+              ))
+            }
+          </div>
+        )}
       </div>
     </div>
   );

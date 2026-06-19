@@ -14,6 +14,7 @@ from .permissions import IsAdminOrReadOnly
 from django.contrib.auth.models import User
 from django.db.models import Avg, Sum, F
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -129,6 +130,35 @@ class DashboardStatsView(APIView):
 
         return Response(stats)
 
+
+class TeaRecommendationView(ListAPIView):
+
+    serializer_class = TeaSerializer
+
+    def get_queryset(self):
+
+        tea_id = self.kwargs["pk"]
+
+        tea = Tea.objects.get(pk=tea_id)
+
+        recommendations = Tea.objects.filter(
+            category=tea.category
+        ).exclude(
+            id=tea.id
+        )
+
+        if recommendations.count() >= 4:
+            return recommendations[:4]
+
+        remaining = 4 - recommendations.count()
+
+        fallback = Tea.objects.exclude(
+            id=tea.id
+        ).exclude(
+            category=tea.category
+        ).order_by("-created_at")[:remaining]
+
+        return list(recommendations) + list(fallback)
 
 # """
 # from rest_framework.decorators import api_view

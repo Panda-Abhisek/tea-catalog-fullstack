@@ -3,7 +3,7 @@ from django.urls import path
 from .views import (
     DashboardStatsView,
     TeaListCreateView,
-    TeaRetrieveUpdateDeleteView, register
+    TeaRetrieveUpdateDeleteView, register, TeaRecommendationView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -55,6 +55,11 @@ urlpatterns = [
         "dashboard/stats/",
         DashboardStatsView.as_view(),
         name="dashboard-stats",
+    ),
+    path(
+        "teas/<int:pk>/recommendations/",
+        TeaRecommendationView.as_view(),
+        name="tea-recommendations",
     ),
 ]
 
