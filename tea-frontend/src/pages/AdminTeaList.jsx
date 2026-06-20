@@ -222,6 +222,7 @@ const AdminTeaList = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -246,6 +247,9 @@ const AdminTeaList = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title={tea.description}>
                       {tea.description || '-'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title={tea.category}>
+                      {tea.category}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                       <Link
