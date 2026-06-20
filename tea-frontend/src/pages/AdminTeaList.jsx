@@ -18,7 +18,7 @@ const AdminTeaList = () => {
     price__lte: '',
     stock__gte: '',
     stock__lte: '',
-    ordering: '',
+    ordering: '-created_at',
   });
 
   const fetchTeas = useCallback(async () => {
