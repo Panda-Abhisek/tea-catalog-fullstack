@@ -20,9 +20,20 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker Image
+      - name: Build Image
         run: |
           docker build -t tea-api .
+
+      - name: Start Container
+        run: |
+          docker run -d \
+            --name tea-api \
+            -p 8000:8000 \
+            tea-api
+
+      - name: Wait For Startup
+        run: sleep 15
+
+      - name: Health Check
+        run: |
+          curl --fail http://localhost:8000/api/health/
