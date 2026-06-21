@@ -18,7 +18,7 @@ from rest_framework.generics import ListAPIView
 
 @api_view(["GET"])
 def health(request):
-    return Response({"status": "ok"})
+    return Response({"status": "ok"," request: ": request})
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
