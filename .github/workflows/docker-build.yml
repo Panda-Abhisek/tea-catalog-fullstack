@@ -37,3 +37,8 @@ jobs:
       - name: Health Check
         run: |
           curl --fail http://localhost:8000/api/health/
+
+      - name: Show Container Logs
+        if: always()
+        run: |
+          docker logs tea-api
