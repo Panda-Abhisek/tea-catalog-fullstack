@@ -30,12 +30,12 @@ jobs:
         run: |
           ssh ${{ secrets.OCI_USER }}@${{ secrets.OCI_HOST }} << 'EOF'
 
-            cd /opt/apps/tea-api
+          cd /opt/apps/tea-api
 
-            git pull origin main
+          git fetch origin
 
-            docker-compose down
+          git reset --hard origin/main
 
-            docker-compose up -d --build
+          docker compose up -d --build
 
           EOF
