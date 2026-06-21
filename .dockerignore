@@ -21,3 +21,14 @@ db.sqlite3
 .gitHub
 
 .vscode
+
+chaihq/venv
+chaihq/.venv
+
+chaihq/staticfiles
+
+*.sqlite3
+
+**/__pycache__
+
+*.pyc
