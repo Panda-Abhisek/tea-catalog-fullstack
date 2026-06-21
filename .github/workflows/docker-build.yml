@@ -27,7 +27,7 @@ jobs:
       - name: Start Container
         run: |
           docker run -d \
-            --name tea-api \
+            --name tea-catalog-api \
             -p 8000:8000 \
             -e SECRET_KEY=test_secret \
             -e DEBUG=False \
