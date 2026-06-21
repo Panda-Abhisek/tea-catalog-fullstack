@@ -16,6 +16,9 @@ from django.db.models import Avg, Sum, F
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 
+@api_view(["GET"])
+def health(request):
+    return Response({"status": "ok"})
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):

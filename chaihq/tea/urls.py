@@ -3,7 +3,8 @@ from django.urls import path
 from .views import (
     DashboardStatsView,
     TeaListCreateView,
-    TeaRetrieveUpdateDeleteView, register, TeaRecommendationView
+    TeaRetrieveUpdateDeleteView,
+    health, register, TeaRecommendationView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -17,6 +18,7 @@ from .views import CustomTokenObtainPairView
 from .cart_views import AddToCartView, CartView, ClearCartView, RemoveCartItemView, UpdateCartItemView
 
 urlpatterns = [
+    path("health/", health),
     path(
         "teas/",
         TeaListCreateView.as_view(),
