@@ -22,7 +22,7 @@ jobs:
 
       - name: Build Image
         run: |
-          docker build -t tea-api .
+          docker build -t tea-catalog-api .
 
       - name: Start Container
         run: |
@@ -32,7 +32,7 @@ jobs:
             -e SECRET_KEY=test_secret \
             -e DEBUG=False \
             -e ALLOWED_HOSTS=localhost \
-            tea-api
+            tea-catalog-api
 
       - name: Wait For Startup
         run: sleep 15
@@ -44,4 +44,4 @@ jobs:
       - name: Show Container Logs
         if: always()
         run: |
-          docker logs tea-api
+          docker logs tea-catalog-api
