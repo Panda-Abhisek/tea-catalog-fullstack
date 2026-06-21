@@ -4,7 +4,7 @@ from .views import (
     DashboardStatsView,
     TeaListCreateView,
     TeaRetrieveUpdateDeleteView,
-    health, register, TeaRecommendationView
+    health, register, TeaRecommendationView,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,

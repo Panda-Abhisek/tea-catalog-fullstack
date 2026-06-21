@@ -13,7 +13,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from dotenv import load_dotenv
 import os
 from pathlib import Path
-
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -208,3 +209,12 @@ SECURE_PROXY_SSL_HEADER = (
 )
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN"),
+    integrations=[
+        DjangoIntegration(),
+    ],
+    traces_sample_rate=1.0,
+    send_default_pii=True,
+)
