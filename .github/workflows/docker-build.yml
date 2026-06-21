@@ -29,6 +29,9 @@ jobs:
           docker run -d \
             --name tea-api \
             -p 8000:8000 \
+            -e SECRET_KEY="${{ secrets.SECRET_KEY }}" \
+            -e DEBUG=False \
+            -e ALLOWED_HOSTS=localhost \
             tea-api
 
       - name: Wait For Startup
