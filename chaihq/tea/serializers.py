@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Cart, Tea, CartItem
+from .models import Cart, Order, OrderItem, Tea, CartItem
 from django.contrib.auth.models import User
 
 class SafeImageField(serializers.ImageField):
@@ -107,3 +107,50 @@ class AddToCartSerializer(serializers.Serializer):
 
 class UpdateCartItemSerializer(serializers.Serializer):
     quantity = serializers.IntegerField(min_value=1)
+    
+class UpdateOrderStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ["status"]
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    tea_name = serializers.CharField(source="tea.name", read_only = True)
+    tea_photo = serializers.ImageField(source="tea.photo",read_only=True,)
+    
+    class Meta:
+        model = OrderItem
+        fields = [
+            "id",
+            "tea",
+            "tea_name",
+            "tea_photo",
+            "quantity",
+            "price_at_purchase"
+        ]
+        
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(
+        many=True,
+        read_only=True,
+    )
+    username = serializers.CharField(
+        source="user.username",
+        read_only=True,
+    )
+    total_items = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Order
+        fields = [
+            "id",
+            "username",
+            "status",
+            "total_amount",
+            "total_items",
+            "created_at",
+            "updated_at",
+            "items",
+        ]
+        
+    def get_total_items(self, obj):
+        return sum(item.quantity for item in obj.items.all())

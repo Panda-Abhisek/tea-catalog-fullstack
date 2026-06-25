@@ -1,10 +1,12 @@
-from rest_framework import generics
+# from psycopg import transaction
+from django.db import transaction
+from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Tea
-from .serializers import RegisterSerializer, TeaSerializer
+from .models import Cart, Order, OrderItem, Tea
+from .serializers import OrderSerializer, RegisterSerializer, TeaSerializer, UpdateOrderStatusSerializer
 from .filters import TeaFilter
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -162,6 +164,93 @@ class TeaRecommendationView(ListAPIView):
         ).order_by("-created_at")[:remaining]
 
         return list(recommendations) + list(fallback)
+    
+    
+class CheckoutView(APIView):
+    permission_classes = [IsAuthenticated]
+    @transaction.atomic
+    def post(self, request):
+        cart = Cart.objects.filter(user=request.user).first()
+        if not cart:
+            return Response({"error": "Cart not found."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        cart_items = cart.items.select_related("tea")
+        if not cart_items.exists():
+            return Response({"error": "Cart is empty."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        total = 0
+        # Validate Stock
+        for item in cart_items:
+            if item.quantity > item.tea.stock:
+                return Response({"error": f"{item.tea.name} is out of stock."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            total += (item.quantity * item.tea.price)
+        order = Order.objects.create(
+            user=request.user,
+            total_amount=total,
+        )
+        for item in cart_items:
+            OrderItem.objects.create(
+                order=order,
+                tea=item.tea,
+                quantity=item.quantity,
+                price_at_purchase=item.tea.price,
+            )
+            item.tea.stock -= item.quantity
+            item.tea.save(update_fields=["stock"])
+
+        cart_items.delete()
+        serializer = OrderSerializer(order)
+        return Response(serializer.data,status=status.HTTP_201_CREATED,)
+    
+class OrderListView(generics.ListAPIView):
+
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return (
+            Order.objects.filter(user=self.request.user)
+            .prefetch_related("items__tea")
+            .order_by("-created_at")
+        )
+        
+class OrderDetailView(generics.RetrieveAPIView):
+
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return (
+            Order.objects.filter(user=self.request.user)
+            .prefetch_related("items__tea")
+        )
+
+class AdminOrderListView(generics.ListAPIView):
+
+    serializer_class = OrderSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        return (
+            Order.objects.select_related("user")
+            .prefetch_related("items__tea")
+            .order_by("-created_at")
+        )
+        
+class AdminOrderUpdateView(generics.UpdateAPIView):
+
+    serializer_class = UpdateOrderStatusSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    queryset = Order.objects.all()
+
+    http_method_names = ["patch"]
+    
+
 
 # """
 # from rest_framework.decorators import api_view

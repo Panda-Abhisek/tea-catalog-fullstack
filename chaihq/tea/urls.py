@@ -1,7 +1,12 @@
 from django.urls import path
 
 from .views import (
+    AdminOrderListView,
+    AdminOrderUpdateView,
+    CheckoutView,
     DashboardStatsView,
+    OrderDetailView,
+    OrderListView,
     TeaListCreateView,
     TeaRetrieveUpdateDeleteView,
     health, register, TeaRecommendationView,
@@ -88,6 +93,29 @@ urlpatterns = [
         "cart/clear/",
         ClearCartView.as_view(),
         name="cart-clear",
+    ),
+    path(
+        "orders/",
+        OrderListView.as_view(),
+    ),
+
+    path(
+        "orders/<int:pk>/",
+        OrderDetailView.as_view(),
+    ),
+
+    path(
+        "orders/checkout/",
+        CheckoutView.as_view(),
+    ),
+    path(
+        "admin/orders/",
+        AdminOrderListView.as_view(),
+    ),
+
+    path(
+        "admin/orders/<int:pk>/",
+        AdminOrderUpdateView.as_view(),
     ),
 ]
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../utils/axios';
+import api from '../../utils/axios';
 import { Edit, Trash2, Search, Plus, SlidersHorizontal } from 'lucide-react';
 
 const AdminTeaList = () => {

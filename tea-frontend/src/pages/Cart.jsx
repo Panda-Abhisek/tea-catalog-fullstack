@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { checkout } from '../services/orderServices';
 import {
     updateCartItem,
     removeCartItem,
@@ -49,28 +50,29 @@ const Cart = () => {
     };
 
     const handleCheckout = async () => {
-        if (!user) {
-            setShowLoginPrompt(true);
-            setTimeout(() => setShowLoginPrompt(false), 3000);
-            return;
-        }
+    if (!user) {
+        setShowLoginPrompt(true);
+        setTimeout(() => setShowLoginPrompt(false), 3000);
+        return;
+    }
 
-        setIsCheckingOut(true);
-        // Simulate API call for checkout
-        try {
-            await clearCartAPI();
-            await fetchCart();
-            setCheckoutSuccess(true);
-            setTimeout(() => {
-                setCheckoutSuccess(false);
-                navigate("/");
-            }, 3000);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsCheckingOut(false);
-        }
-    };
+    setIsCheckingOut(true);
+
+    try {
+        const order = await checkout();
+
+        await fetchCart();
+
+        navigate(`/orders/${order.id}`, {
+            state: { success: true }
+        });
+
+    } catch (err) {
+        console.error(err);
+    } finally {
+        setIsCheckingOut(false);
+    }
+};
 
     if (checkoutSuccess) {
         return (
