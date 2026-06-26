@@ -60,7 +60,7 @@ const Cart = () => {
 
         try {
             const order = await checkout();
-            console.log("Order: from cart.jsx at handle checkout ", order)
+            // console.log("Order: from cart.jsx at handle checkout ", order)
             const payment = await createPaymentOrder(order.id);
             openRazorpay(payment, order.id);
         } catch (err) {

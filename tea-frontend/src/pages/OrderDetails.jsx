@@ -26,7 +26,7 @@ const OrderDetails = () => {
     const fetchOrder = async () => {
       try {
         const data = await getOrder(id);
-        console.log(data);
+        // console.log(data);
         
         setOrder(data);
       } catch (err) {

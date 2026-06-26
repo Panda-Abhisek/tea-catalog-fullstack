@@ -69,7 +69,7 @@ const CreateTea = () => {
       }
     } finally {
       setIsLoading(false);
-      console.log(formData);
+      // console.log(formData);
     }
   };
 
