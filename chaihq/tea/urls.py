@@ -4,11 +4,14 @@ from .views import (
     AdminOrderListView,
     AdminOrderUpdateView,
     CheckoutView,
+    CreatePaymentOrderView,
     DashboardStatsView,
     OrderDetailView,
     OrderListView,
+    RazorpayWebhookView,
     TeaListCreateView,
     TeaRetrieveUpdateDeleteView,
+    VerifyPaymentView,
     health, register, TeaRecommendationView,
 )
 from rest_framework_simplejwt.views import (
@@ -116,6 +119,18 @@ urlpatterns = [
     path(
         "admin/orders/<int:pk>/",
         AdminOrderUpdateView.as_view(),
+    ),
+    path(
+        "payments/create-order/",
+        CreatePaymentOrderView.as_view(),
+    ),
+    path(
+        "payments/verify/",
+        VerifyPaymentView.as_view(),
+    ),
+    path(
+        "payments/webhook/",
+        RazorpayWebhookView.as_view(),
     ),
 ]
 

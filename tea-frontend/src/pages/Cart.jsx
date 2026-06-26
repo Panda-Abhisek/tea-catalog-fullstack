@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { checkout } from '../services/orderServices';
 import {
     updateCartItem,
     removeCartItem,
     clearCart as clearCartAPI,
 } from "../services/cartService";
+import { createPaymentOrder, checkout, verifyPayment } from '../services/orderServices';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, CheckCircle } from 'lucide-react';
 
 const Cart = () => {
@@ -50,29 +50,65 @@ const Cart = () => {
     };
 
     const handleCheckout = async () => {
-    if (!user) {
-        setShowLoginPrompt(true);
-        setTimeout(() => setShowLoginPrompt(false), 3000);
-        return;
-    }
+        if (!user) {
+            setShowLoginPrompt(true);
+            setTimeout(() => setShowLoginPrompt(false), 3000);
+            return;
+        }
 
-    setIsCheckingOut(true);
+        setIsCheckingOut(true);
 
-    try {
-        const order = await checkout();
+        try {
+            const order = await checkout();
+            console.log("Order: from cart.jsx at handle checkout ", order)
+            const payment = await createPaymentOrder(order.id);
+            openRazorpay(payment, order.id);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsCheckingOut(false);
+        }
+    };
 
-        await fetchCart();
+    const openRazorpay = async (payment,orderId) => {
+        const options = {
 
-        navigate(`/orders/${order.id}`, {
-            state: { success: true }
-        });
+            key: payment.key,
+            amount: payment.amount,
+            currency: payment.currency,
+            name: "Tea Catalog",
+            description: "Tea Purchase",
+            order_id: payment.order_id,
 
-    } catch (err) {
-        console.error(err);
-    } finally {
-        setIsCheckingOut(false);
-    }
-};
+            handler: async function (response) {
+                try {
+                    await verifyPayment({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                    });
+                    await fetchCart();
+                    navigate(
+                        `/orders/${orderId}`,
+                        {
+                            state: {
+                                success: true,
+                            },
+                        }
+                    );
+                } catch (err) {
+                    console.error(err);
+                    alert("Payment verification failed.");
+                }
+            },
+            theme: {
+                color: "#059669",
+            },
+        };
+
+        const razorpay = new window.Razorpay(options);
+        razorpay.open();
+    };
 
     if (checkoutSuccess) {
         return (

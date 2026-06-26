@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "cloudinary",
     "cloudinary_storage",
     "corsheaders",
+    "django_extensions"
 ]
 
 REST_FRAMEWORK = {
@@ -218,3 +219,7 @@ sentry_sdk.init(
     traces_sample_rate=1.0,
     send_default_pii=True,
 )
+
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
+RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")

@@ -31,3 +31,23 @@ export const updateOrderStatus = async (
 
   return response.data;
 };
+
+export const createPaymentOrder = async (orderId) => {
+    const response = await api.post(
+        "/payments/create-order/",
+        {
+            order_id: orderId,
+        }
+    );
+
+    return response.data;
+};
+
+export const verifyPayment = async (payload) => {
+    const response = await api.post(
+        "/payments/verify/",
+        payload
+    );
+
+    return response.data;
+};

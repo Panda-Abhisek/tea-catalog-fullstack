@@ -26,7 +26,8 @@ const OrderDetails = () => {
     const fetchOrder = async () => {
       try {
         const data = await getOrder(id);
-
+        console.log(data);
+        
         setOrder(data);
       } catch (err) {
         console.error(err);
@@ -80,6 +81,7 @@ const OrderDetails = () => {
 
       <div className="backdrop-blur-sm bg-amber-100 rounded-xl border border-gray-200 p-6">
         <div className="flex justify-between items-start">
+          <img className="h-40 w-40 rounded" src={order.items[0].tea_photo} alt={order.items[0].tea_name} />
           <div>
             <h1 className="text-3xl font-bold">Order #{order.id}</h1>
 

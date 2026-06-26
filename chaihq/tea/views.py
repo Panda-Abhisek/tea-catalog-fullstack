@@ -1,10 +1,13 @@
 # from psycopg import transaction
 from django.db import transaction
+from django.conf import settings
+import razorpay
 from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Cart, Order, OrderItem, Tea
-from .serializers import OrderSerializer, RegisterSerializer, TeaSerializer, UpdateOrderStatusSerializer
+
+from .models import Cart, CartItem, Order, OrderItem, Tea
+from .serializers import OrderSerializer, RegisterSerializer, TeaSerializer, UpdateOrderStatusSerializer, VerifyPaymentSerializer
 from .filters import TeaFilter
 from rest_framework.permissions import IsAuthenticated
 
@@ -17,6 +20,7 @@ from django.contrib.auth.models import User
 from django.db.models import Avg, Sum, F
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
+from .payments import client
 
 @api_view(["GET"])
 def health(request):
@@ -199,17 +203,17 @@ class CheckoutView(APIView):
                 quantity=item.quantity,
                 price_at_purchase=item.tea.price,
             )
-            item.tea.stock -= item.quantity
-            item.tea.save(update_fields=["stock"])
+            # item.tea.stock -= item.quantity
+            # item.tea.save(update_fields=["stock"])
 
-        cart_items.delete()
+        # cart_items.delete()
         serializer = OrderSerializer(order)
         return Response(serializer.data,status=status.HTTP_201_CREATED,)
     
 class OrderListView(generics.ListAPIView):
 
     serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def get_queryset(self):
         return (
@@ -221,7 +225,7 @@ class OrderListView(generics.ListAPIView):
 class OrderDetailView(generics.RetrieveAPIView):
 
     serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def get_queryset(self):
         return (
@@ -251,6 +255,162 @@ class AdminOrderUpdateView(generics.UpdateAPIView):
     http_method_names = ["patch"]
     
 
+class CreatePaymentOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        # print("REQUEST DATA:", request.data)
+
+        order_id = request.data.get("order_id")
+
+        # print("ORDER ID:", order_id)
+
+        try:
+            order = Order.objects.get(
+                id=order_id,
+                user=request.user,
+            )
+
+            # print("ORDER FOUND:", order.id)
+
+        except Order.DoesNotExist:
+            print("ORDER NOT FOUND")
+
+            return Response(
+                {"error": "Order not found"},
+                status=404,
+            )
+
+        # print("Creating Razorpay order...")
+
+        razorpay_order = client.order.create(
+            {
+                "amount": int(order.total_amount * 100),
+                "currency": "INR",
+                "payment_capture": 1,
+            }
+        )
+
+        # print(razorpay_order)
+
+        order.razorpay_order_id = razorpay_order["id"]
+        order.save(update_fields=["razorpay_order_id"])
+
+        return Response(
+            {
+                "key": settings.RAZORPAY_KEY_ID,
+                "order_id": razorpay_order["id"],
+                "amount": razorpay_order["amount"],
+                "currency": razorpay_order["currency"],
+            }
+        )
+        
+
+class VerifyPaymentView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        serializer = VerifyPaymentSerializer(data = request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        
+        try:
+            client.utility.verify_payment_signature(
+                {
+                    "razorpay_order_id": data["razorpay_order_id"],
+                    "razorpay_payment_id": data["razorpay_payment_id"],
+                    "razorpay_signature": data["razorpay_signature"],
+                }
+            )
+        except razorpay.errors.SignatureVerficationError:
+            return Response(
+                {"error": "Invalid payment signature."}, status=400.
+            )
+        
+        order = Order.objects.get(razorpay_order_id = data["razorpay_order_id"])
+        for item in order.items.select_related("tea"):
+            item.tea.stock -= item.quantity
+            item.tea.save(update_fields=["stock"])
+
+        CartItem.objects.filter(
+            cart__user=order.user
+        ).delete()
+
+        order.payment_status = "PAID"
+        order.status = "CONFIRMED"
+        order.razorpay_payment_id = data["razorpay_payment_id"]
+        order.razorpay_signature = data["razorpay_signature"]
+
+        order.save()
+
+        return Response(
+            {
+                "message":
+                "Payment verified successfully."
+            }
+        )
+        
+        
+# views.py
+
+import json
+import hmac
+import hashlib
+
+class RazorpayWebhookView(APIView):
+
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+
+        webhook_secret = settings.RAZORPAY_WEBHOOK_SECRET
+
+        received_signature = request.headers.get(
+            "X-Razorpay-Signature"
+        )
+
+        generated_signature = hmac.new(
+            webhook_secret.encode(),
+            request.body,
+            hashlib.sha256,
+        ).hexdigest()
+
+        if not hmac.compare_digest(
+            received_signature,
+            generated_signature,
+        ):
+            return Response(
+                {"error": "Invalid signature"},
+                status=400,
+            )
+
+        payload = json.loads(request.body)
+
+        event = payload["event"]
+
+        payment = payload["payload"]["payment"]["entity"]
+
+        if event == "payment.captured":
+
+            Order.objects.filter(
+                razorpay_order_id=payment["order_id"]
+            ).update(
+                payment_status="PAID",
+                status = "CONFIRMED",
+                razorpay_payment_id=payment["id"],
+            )
+
+        elif event == "payment.failed":
+
+            Order.objects.filter(
+                razorpay_order_id=payment["order_id"]
+            ).update(
+                payment_status="FAILED"
+            )
+
+        return Response({"status": "ok"})
 
 # """
 # from rest_framework.decorators import api_view

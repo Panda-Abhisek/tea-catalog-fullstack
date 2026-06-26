@@ -145,6 +145,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "id",
             "username",
             "status",
+            "payment_status",
             "total_amount",
             "total_items",
             "created_at",
@@ -154,3 +155,9 @@ class OrderSerializer(serializers.ModelSerializer):
         
     def get_total_items(self, obj):
         return sum(item.quantity for item in obj.items.all())
+    
+
+class VerifyPaymentSerializer(serializers.Serializer):
+    razorpay_order_id = serializers.CharField()
+    razorpay_payment_id = serializers.CharField()
+    razorpay_signature = serializers.CharField()
