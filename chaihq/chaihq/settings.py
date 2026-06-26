@@ -50,8 +50,12 @@ INSTALLED_APPS = [
     "cloudinary",
     "cloudinary_storage",
     "corsheaders",
-    "django_extensions"
 ]
+
+if DEBUG:
+    INSTALLED_APPS += [
+        "django_extensions",
+    ]
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
