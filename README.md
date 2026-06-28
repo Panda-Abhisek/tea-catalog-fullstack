@@ -1,6 +1,6 @@
 # Chai Base
 
-Full-stack tea catalog and cart application built with Django REST Framework and React. The backend exposes a JWT-protected API for managing teas, carts, recommendations, dashboard stats, and generated API docs. The frontend provides a customer catalog experience plus an admin area for tea inventory management.
+Full-stack tea catalog, cart, and order management application built with Django REST Framework and React. The backend exposes a JWT-protected API for managing teas, carts, orders, Razorpay payments, recommendations, dashboard stats, and generated API docs. The frontend provides a customer catalog, shopping cart with real payment gateway, order tracking, and an admin area for tea inventory, order lifecycle management, and dashboard metrics.
 
 ## Tech Stack
 
@@ -13,17 +13,19 @@ Full-stack tea catalog and cart application built with Django REST Framework and
 - PostgreSQL via `psycopg`
 - Cloudinary media storage
 - drf-spectacular Swagger/OpenAPI docs
-- Sentry integration
+- Razorpay payment gateway
+- Sentry error monitoring
 - Docker and Gunicorn
 
 **Frontend**
 
 - React 19
-- Vite
-- React Router
+- Vite 8
+- React Router 7
 - Axios with JWT refresh handling
-- Tailwind CSS
+- Tailwind CSS v4
 - Lucide React icons
+- Razorpay checkout
 - Vercel SPA rewrite config
 
 ## Project Structure
@@ -32,11 +34,17 @@ Full-stack tea catalog and cart application built with Django REST Framework and
 .
 +-- chaihq/                  # Django project and tea API app
 |   +-- chaihq/              # Django settings, root URLs, WSGI/ASGI
-|   +-- tea/                 # Models, serializers, views, filters, permissions
+|   +-- tea/                 # Models, serializers, views, cart_views,
+|   |                        # payments, filters, permissions
 |   +-- static/              # Backend static assets
+|   +-- templates/           # Django HTML templates
 |   +-- manage.py
 +-- tea-frontend/            # React/Vite frontend
 |   +-- src/                 # Pages, components, contexts, services
+|   |   +-- pages/admin/    # Admin dashboard, order management
+|   |   +-- context/        # Auth and cart React contexts
+|   |   +-- services/       # API service modules
+|   |   +-- utils/          # Axios instance with JWT interceptor
 |   +-- public/              # Public frontend assets
 |   +-- vercel.json
 +-- Dockerfile               # Backend container image
@@ -47,17 +55,18 @@ Full-stack tea catalog and cart application built with Django REST Framework and
 
 ## Features
 
-- Public tea catalog with detail pages
+- Public tea catalog with detail pages and category recommendations
 - Tea search, filtering, and ordering
-- Tea recommendations by category
-- User registration and JWT login
-- Automatic frontend access-token refresh
+- User registration and JWT login with automatic access-token refresh
 - Authenticated cart with add, update, remove, and clear actions
-- Admin-only create, edit, and delete flows for teas
-- Admin dashboard stats for inventory and users
+- Customer order management — place, view history, and track orders
+- Razorpay payment gateway integration with order verification
+- Admin-only tea inventory CRUD (create, edit, delete)
+- Admin dashboard with stats, low stock alerts, and latest records
+- Admin order lifecycle management (confirm, ship, deliver, cancel)
 - Image upload support through Cloudinary
-- Swagger API docs
-- Docker build and OCI deployment workflows
+- Swagger/OpenAPI auto-generated docs
+- Docker build and OCI deployment workflows with health checks
 
 ## Backend Setup
 
@@ -77,6 +86,11 @@ DB_PORT=5432
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
+
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+RAZORPAY_WEBHOOK_SECRET=
+
 SENTRY_DSN=
 ```
 
@@ -151,6 +165,14 @@ All API routes are mounted under `/api/`.
 | `PATCH` | `/api/cart/item/<item_id>/` | Update cart item quantity | User |
 | `DELETE` | `/api/cart/item/<item_id>/delete/` | Remove a cart item | User |
 | `DELETE` | `/api/cart/clear/` | Clear cart | User |
+| `POST` | `/api/orders/checkout/` | Place an order from cart | User |
+| `GET` | `/api/orders/` | List current user's orders | User |
+| `GET` | `/api/orders/<id>/` | Get order details | User |
+| `GET` | `/api/admin/orders/` | List all orders | Admin |
+| `PATCH` | `/api/admin/orders/<id>/` | Update order status | Admin |
+| `POST` | `/api/payments/create-order/` | Create a Razorpay payment order | User |
+| `POST` | `/api/payments/verify/` | Verify a Razorpay payment | User |
+| `POST` | `/api/payments/webhook/` | Razorpay webhook handler | Public |
 | `GET` | `/api/dashboard/stats/` | Admin dashboard metrics | Admin |
 | `GET` | `/api/schema/` | OpenAPI schema | Public |
 | `GET` | `/api/docs/` | Swagger UI | Public |
@@ -184,7 +206,7 @@ Or use Docker Compose:
 docker compose up -d --build
 ```
 
-The compose file expects an external Docker network named `spring-network` and uses `.env` from the repository root as the service env file. Create that network first if it does not exist:
+The compose file expects an external Docker network named `spring-network` and uses `.env` from the repository root as the service env file, with a health check against `/api/health/`. Create the network first if it does not exist:
 
 ```bash
 docker network create spring-network
@@ -208,12 +230,15 @@ npm run lint
 npm run build
 ```
 
+> `django-extensions` is enabled only when `DEBUG=True` and is excluded in production builds.
+
 ## Deployment Notes
 
 - Backend deployment is container-based with `gunicorn chaihq.wsgi:application --bind 0.0.0.0:8000`.
-- GitHub Actions includes a Docker build health check on `main`.
+- GitHub Actions includes a Docker build health check on `main` that verifies the container starts and `/api/health/` responds.
 - The deploy workflow SSHes into an OCI host, resets `/opt/apps/tea-api` to `origin/main`, and runs `docker compose up -d --build`.
 - Frontend deployment can use Vercel; `tea-frontend/vercel.json` rewrites all routes to `index.html` for client-side routing.
+- Frontend environment (`VITE_API_URL`) points to the production backend at `https://api-tea.abhisekpanda.co.in` in `.env.production`.
 
 ## Demo Credentials
 
